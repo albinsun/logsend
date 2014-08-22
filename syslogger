@@ -1,0 +1,40 @@
+#!/bin/bash
+
+
+function checker() {
+    case $# in
+        1)
+            if [ $? != 0 ] ; then echo "$1 Terminating..." >&2 ; exit 1 ; fi ;;
+        *)
+            ;;
+            # TODO: other check type like logical. -- 2014-08-22_16:30:12 by ypsun
+    esac
+}
+
+
+# essentials for GNU getopt
+TEMP=`getopt -o t: -l tag: -n "$0" -- "$@"`
+checker "getopt error."
+eval set -- "$TEMP"
+
+# check environment
+LOGGER=`which logger`
+checker "logger not found."
+
+# default value
+tag="syslogger" # -t/--tag
+
+# argument parsing
+while true
+do
+    case "$1" in
+        -t|--tag)
+            tag="$2"; shift 2;;
+        --)
+            shift; break ;;
+        *)
+            echo "Internal error!"; exit 1 ;;
+    esac
+done
+
+logger -s -t $tag $@
