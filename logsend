@@ -1,47 +1,41 @@
 #!/bin/bash
 
 
-# ---------- user configs
-GETOPT_PATH="/usr/local/Cellar/gnu-getopt/1.1.5/bin/getopt"    # if need
+# ---------- config
 
 
 # ---------- overtune
-which ${GETOPT_PATH} &> /dev/null || GETOPT_PATH=`which getopt`
 self=`basename $0`
-tag="syslogger" # -t, --tag
+tag="logsend"    # -t
 
 function usage() {
 echo "
-usage: $self [-h] [-t <tag>] [message]
+usage: $self [-h] [-t <tag>] [msg]
 
 syslog sender extends logger shell command
 
 OPTIONS:
-   -h, --help      Show this message
-   -t, --tag       Prefix event by tag
+   -h      Show this message
+   -t      Prefix event by tag
 "
 }
 
 
-# essentials for GNU getopt
-TEMP=`$GETOPT_PATH -o t:h -l tag:,help -n $self -- "$@"`
-[ $? != 0 ] && usage && exit 1
-eval set -- "$TEMP"
-
-
 # argument parsing
-while true
+while getopts t:h opt
 do
-    case "$1" in
-        -t|--tag)
-            tag="$2"; shift 2 ;;
-	-h|--help)
-            usage; exit 0 ;;
-        --)
-            shift; break ;;
+    case $opt in
+	h)
+            usage; exit 0
+	    ;;
+        t)
+            tag=$OPTARG
+	    ;;
         *)
-            echo "Internal error!" >&2; exit 1 ;;
+            usage; exit 1
+	    ;;
     esac
 done
+shift $(( $OPTIND - 1 ))
 
-logger -s -t $tag $@
+logger -s -t $tag "$@"
