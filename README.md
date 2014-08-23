@@ -1,4 +1,4 @@
 syslogger
 =========
 
-syslog sender based on logger shell command
+syslog sender extends logger shell command
