@@ -1,41 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
+import argparse
+import logging, logging.handlers
+import sys
+import re
 
-# ---------- config
+parser = argparse.ArgumentParser(
+        description="the stupid syslog sender",
+        epilog="https://github.com/ypsun/logsend"
+        )
 
+def eps_format(string):
+    pattern = r"\d+[c,n]"
+    if not re.match(pattern, string):
+        raise argparse.ArgumentTypeError("valid pattern is \"%s\"" % pattern)
+    return string
 
-# ---------- overtune
-self=`basename $0`
-tag="logsend"    # -t
-
-function usage() {
-echo "
-usage: $self [-h] [-t <tag>] [msg]
-
-syslog sender extends logger shell command
-
-OPTIONS:
-   -h      Show this message
-   -t      Prefix event by tag
-"
-}
-
-
-# argument parsing
-while getopts t:h opt
-do
-    case $opt in
-	h)
-            usage; exit 0
-	    ;;
-        t)
-            tag=$OPTARG
-	    ;;
-        *)
-            usage; exit 1
-	    ;;
-    esac
-done
-shift $(( $OPTIND - 1 ))
-
-logger -s -t $tag "$@"
+parser.add_argument("-d", "--destination", metavar="SERVER", default="localhost", help="send to syslog server %(metavar)s")
+parser.add_argument("-f", "--eps", default="1c", type=eps_format, help="frequency mean and distribution (c: constant, n: normal distribution). ex. \"30n\" will send randomly by normal distribution with mean eps 30")
+parser.add_argument("-i", "--file", type=argparse.FileType("r"), help="message by file content")
+parser.add_argument("-n", "--amount", type=int, metavar="N", default=1, help="send %(metavar)s events. -1 for endless")
+parser.add_argument("-t", "--tag", default="logsend", help="header before message")
+parser.add_argument("-v", "--version", action="version", version="1.0")
+parser.add_argument("message", help="message by text. will be suppressed if \"-i\" exists")
+print parser.parse_args()
