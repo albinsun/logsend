@@ -1,4 +1,4 @@
-syslogger
+logsend
 =========
 
-syslog sender based on logger shell command
+the stupid syslog sender
