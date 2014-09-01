@@ -32,20 +32,25 @@ parser = argparse.ArgumentParser(
         )
 parser.add_argument("-f", "--eps", type=int, default=1, help="events per second (eps) ")
 parser.add_argument("-i", "--file", type=argparse.FileType("r"), help="message by file content")
-parser.add_argument("-n", "--number", type=int, metavar="N", default=1, help="send %(metavar)s events, -1 for endless")
+parser.add_argument("-n", "--number", type=int, metavar="N", help="send %(metavar)s events, -1 for endless")
 parser.add_argument("-p", "--priority", type=pri_type, default="syslog.info", help="syslog priority (facility.severity)")
 parser.add_argument("-s", "--server", default="localhost", metavar="SERVER", help="send to syslog server %(metavar)s")
 parser.add_argument("-v", "--version", action="version", version="1.0")
-parser.add_argument("message", help="message by text")
+parser.add_argument("message", nargs="?", help="message by text")
 args = parser.parse_args()
 
 
 # [ initialization ]
+# -f
 period = 1.0 / args.eps
+# -i and message
 msg = (line.rstrip() for line in args.file) if args.file else (args.message for i in itertools.count())
-runs = itertools.count() if args.file or args.number < 0 else xrange(args.number)
+# -n
+if args.message and args.number is None:
+    args.number = 1
+runs = xrange(args.number) if args.number >= 0 else itertools.count()
+# -p
 facility, severity = args.priority
-
 # logger to work
 logger = logging.getLogger("logsend")
 logger.setLevel(logging.DEBUG)
