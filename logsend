@@ -4,18 +4,10 @@
 import argparse
 import itertools
 import logging, logging.handlers
-import sys
 import time
 
 
-# local logger
-mylogger = logging.getLogger("local")
-myformatter = logging.Formatter("%(filename)s: %(levelname)s: %(message)s")
-myhandler = logging.StreamHandler()
-myhandler.setFormatter(myformatter)
-mylogger.addHandler(myhandler)
-
-# argparse
+# [ argparse ]
 def priority_str(priority):
     facility = ["auth", "authpriv", "cron", "daemon", "ftp", "kern", "lpr", "mail", "news", "syslog", "user", "uucp", \
                 "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
@@ -53,17 +45,25 @@ args = parser.parse_args()
 
 
 # [ initialization ]
-# period by -f
+# local logger
+mylogger = logging.getLogger("local")
+myformatter = logging.Formatter("%(filename)s: %(levelname)s: %(message)s")
+myhandler = logging.StreamHandler()
+myhandler.setFormatter(myformatter)
+mylogger.addHandler(myhandler)
+
+# period
 period = 1.0 / args.eps
-# msg by -i and message
+# msg
 msg = (line.rstrip() for line in args.file) if args.file else (args.message for i in itertools.count())
-# runs by -n
+# runs
 if args.message and args.number is None:
     args.number = 1
 runs = xrange(args.number) if args.number >= 0 else itertools.count()
-# priority by -p
+# priority
 facility, severity = args.priority
-# logger to work by -s
+
+# logger for work
 logger = logging.getLogger("logsend")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
