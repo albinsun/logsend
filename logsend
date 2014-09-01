@@ -4,6 +4,7 @@
 import argparse
 import itertools
 import logging, logging.handlers
+import sys
 import time
 
 
@@ -30,13 +31,14 @@ parser = argparse.ArgumentParser(
         description="the stupid syslog sender",
         epilog="https://github.com/ypsun/logsend"
         )
+group = parser.add_mutually_exclusive_group(required=True)
 parser.add_argument("-f", "--eps", type=int, default=1, help="events per second (eps) ")
-parser.add_argument("-i", "--file", type=argparse.FileType("r"), help="message by file content")
 parser.add_argument("-n", "--number", type=int, metavar="N", help="send %(metavar)s events, -1 for endless")
 parser.add_argument("-p", "--priority", type=pri_type, default="syslog.info", help="syslog priority (facility.severity)")
 parser.add_argument("-s", "--server", default="localhost", metavar="SERVER", help="send to syslog server %(metavar)s")
 parser.add_argument("-v", "--version", action="version", version="1.0")
-parser.add_argument("message", nargs="?", help="message by text")
+group.add_argument("-i", "--file", type=argparse.FileType("r"), help="message by file content")
+group.add_argument("message", nargs="?", help="message by text")
 args = parser.parse_args()
 
 
