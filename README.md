@@ -1,7 +1,8 @@
-logsend
-=========
 
+# logsend
 the stupid syslog sender
+
+# Usage
 
 ```
 usage: logsend [-h] [-f EPS] [-n N] [-p PRIORITY] [-s SERVER] [-v] [-i FILE]
@@ -24,4 +25,30 @@ optional arguments:
   -i FILE, --file FILE  message by file content
 
 https://github.com/ypsun/logsend
+```
+
+# Example
+* **logging to localhost**
+```
+$ ./logsend "myheader: my loooooond mesg"
+myheader: my loooooond mesg
+```
+default priority is *syslog.info*, could be assigned by *-p*
+
+* **to remote syslog server, using file as log source**
+```
+$ ./logsend -i test.txt -s 192.168.56.102
+loooooog line1
+loooooog line2
+loooooog line3
+loooooog line4
+loooooog line5
+```
+
+* **3 events with frequency 10 eps (events per second)**
+```
+$ ./logsend "myheader: my loooooond mesg" -s 192.168.56.102 -n3 -f10
+myheader: my loooooond mesg
+myheader: my loooooond mesg
+myheader: my loooooond mesg
 ```
