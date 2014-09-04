@@ -7,6 +7,44 @@ import logging, logging.handlers
 import time
 
 
+# [ argparse ]
+def priority_str(priority):
+    facility = ["auth", "authpriv", "cron", "daemon", "ftp", "kern", "lpr", "mail", "news", "syslog", "user", "uucp", \
+                "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
+    severity = ["debug", "info", "warning", "error", "critical"]
+    f, s = priority.split(".")
+    if f not in facility:
+        raise argparse.ArgumentTypeError("invalid value: %s\nsupported facility: %s" % (f, ", ".join(facility)))
+    if s not in severity:
+        raise argparse.ArgumentTypeError("invalid value: %s\nsupported severity: %s" % (s, ", ".join(severity)))
+    return f, s
+
+def positive_float(num):
+    try:
+        num = float(num)
+        if num <= 0:
+            raise ValueError
+    except:
+        raise argparse.ArgumentTypeError("invalid value: %s is not a positive number" % num)
+    else:
+        return num
+
+parser = argparse.ArgumentParser(
+        description="the stupid syslog sender",
+        epilog="https://github.com/ypsun/logsend"
+        )
+group = parser.add_mutually_exclusive_group(required=True)
+parser.add_argument("-f", "--eps", type=positive_float, default=1, help="events per second (eps) ")
+parser.add_argument("-n", "--number", type=int, metavar="N", help="send %(metavar)s events, -1 for endless")
+parser.add_argument("-p", "--priority", type=priority_str, default="syslog.info", help="syslog priority (facility.severity)")
+parser.add_argument("-s", "--server", default="localhost", metavar="SERVER", help="send to syslog server %(metavar)s")
+parser.add_argument("-v", "--version", action="version", version="1.0")
+group.add_argument("-i", "--file", type=argparse.FileType("r"), help="message by file content")
+group.add_argument("message", nargs="?", help="message by text")
+args = parser.parse_args()
+
+
+# [ initialization ]
 # local logger
 mylogger = logging.getLogger("local")
 myformatter = logging.Formatter("%(filename)s: %(levelname)s: %(message)s")
@@ -14,39 +52,18 @@ myhandler = logging.StreamHandler()
 myhandler.setFormatter(myformatter)
 mylogger.addHandler(myhandler)
 
-# argparse
-def pri_type(priority):
-    facility = ["auth", "authpriv", "cron", "daemon", "ftp", "kern", "lpr", "mail", "news", "syslog", "user", "uucp", \
-                "local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"]
-    severity = ["debug", "info", "warning", "error", "critical"]
-    f, s = priority.split(".")
-    if f not in facility:
-        raise argparse.ArgumentTypeError("unknown facility name: %s\nsupported are %s" % (f, facility))
-    if s not in severity:
-        raise argparse.ArgumentTypeError("unknown severity name: %s\nsupported are %s" % (s, severity))
-    return f, s
-
-parser = argparse.ArgumentParser(
-        description="the stupid syslog sender",
-        epilog="https://github.com/ypsun/logsend"
-        )
-parser.add_argument("-f", "--eps", type=int, default=1, help="events per second (eps) ")
-parser.add_argument("-i", "--file", type=argparse.FileType("r"), help="message by file content")
-parser.add_argument("-n", "--number", type=int, metavar="N", default=1, help="send %(metavar)s events, -1 for endless")
-parser.add_argument("-p", "--priority", type=pri_type, default="syslog.info", help="syslog priority (facility.severity)")
-parser.add_argument("-s", "--server", default="localhost", metavar="SERVER", help="send to syslog server %(metavar)s")
-parser.add_argument("-v", "--version", action="version", version="1.0")
-parser.add_argument("message", help="message by text")
-args = parser.parse_args()
-
-
-# [ initialization ]
+# period
 period = 1.0 / args.eps
+# msg
 msg = (line.rstrip() for line in args.file) if args.file else (args.message for i in itertools.count())
-runs = itertools.count() if args.file or args.number < 0 else xrange(args.number)
+# runs
+if args.message and args.number is None:
+    args.number = 1
+runs = xrange(args.number) if args.number >= 0 else itertools.count()
+# priority
 facility, severity = args.priority
 
-# logger to work
+# logger for work
 logger = logging.getLogger("logsend")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
